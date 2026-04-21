@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#0a0b12"/>
+<title>DossierZen — Coffre-fort Administratif</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════════════════════
+   RESET & ROOT
+═══════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0a0b12;--bg2:#141720;--bg3:#1c2030;--bg4:#232840;--bg5:#2a3050;
+  --accent:#4f8ef7;--accent2:#7c5cfc;--accent3:#00d4aa;
+  --gold:#f5c842;--red:#e05252;--orange:#f07840;--green:#2ecc8a;
+  --text:#eef0ff;--text2:#8892b0;--text3:#4a5278;
+  --border:#1e2438;--border2:#2a3050;
+  --r:16px;--rsm:10px;--rlg:22px;
+  --shadow:0 8px 32px rgba(0,0,0,.5);
+  --glow-blue:0 0 20px rgba(79,142,247,.25);
+  --glow-green:0 0 20px rgba(46,204,138,.2);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:'DM Sans',sans-serif;color:var(--text);font-size:15px;line-height:1.5}
+
+/* ═══════════════════════════════════════════
+   APP SHELL
+═══════════════════════════════════════════ */
+#app{
+  width:100%;max-width:430px;height:100vh;
+  margin:0 auto;
+  background:var(--bg);
+  display:flex;flex-direction:column;
+  position:relative;overflow:hidden;
+}
+
+/* ── Status Bar ── */
+#status-bar{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 20px 6px;
+  background:var(--bg);
+  flex-shrink:0;
+  z-index:50;
+}
+.sb-time{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text)}
+.sb-icons{display:flex;gap:6px;align-items:center}
+.signal{display:flex;gap:2px;align-items:flex-end}
+.signal span{background:var(--text2);border-radius:1.5px;width:3px}
+.signal span:nth-child(1){height:5px}
+.signal span:nth-child(2){height:8px}
+.signal span:nth-child(3){height:12px}
+.battery{width:22px;height:12px;border:1.5px solid var(--text2);border-radius:3px;position:relative}
+.battery::after{content:'';position:absolute;right:-5px;top:50%;transform:translateY(-50%);width:3px;height:6px;background:var(--text2);border-radius:0 2px 2px 0}
+.battery-fill{position:absolute;inset:2px;right:2.5px;background:var(--green);border-radius:1.5px;width:72%}
+.sb-5g{font-size:10px;font-weight:600;color:var(--text2);letter-spacing:.5px}
+
+/* ── Language Scroller ── */
+#lang-bar{
+  display:flex;gap:5px;padding:6px 16px 5px;
+  overflow-x:auto;scrollbar-width:none;flex-shrink:0;
+  background:var(--bg);border-bottom:1px solid var(--border);
+}
+#lang-bar::-webkit-scrollbar{display:none}
+.lang-pill{
+  flex-shrink:0;padding:4px 11px;border-radius:20px;
+  border:1px solid var(--border2);background:transparent;
+  color:var(--text2);font-size:11px;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap;
+}
+.lang-pill.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500}
+.lang-pill:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+
+/* ── Screen Container ── */
+#screens{flex:1;position:relative;overflow:hidden}
+.screen{
+  position:absolute;inset:0;
+  overflow-y:auto;overflow-x:hidden;
+  scrollbar-width:none;
+  transition:transform .4s cubic-bezier(.32,0,.2,1),opacity .3s;
+  background:var(--bg);
+  -webkit-overflow-scrolling:touch;
+}
+.screen::-webkit-scrollbar{display:none}
+.screen.active{transform:translateX(0);opacity:1;pointer-events:all}
+.screen.slide-left{transform:translateX(-100%);opacity:0;pointer-events:none}
+.screen.slide-right{transform:translateX(100%);opacity:0;pointer-events:none}
+
+/* ── Bottom Nav ── */
+#bottom-nav{
+  display:flex;border-top:1px solid var(--border);
+  background:rgba(10,11,18,.95);backdrop-filter:blur(12px);
+  flex-shrink:0;z-index:40;
+  padding-bottom:env(safe-area-inset-bottom,0);
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  padding:10px 0 12px;cursor:pointer;gap:4px;position:relative;
+  transition:opacity .2s;
+}
+.nav-item:active{opacity:.7}
+.nav-icon{font-size:20px;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.nav-item.active .nav-icon{transform:scale(1.15)}
+.nav-label{font-size:9.5px;color:var(--text3);font-weight:500;letter-spacing:.3px;text-transform:uppercase;transition:color .2s}
+.nav-item.active .nav-label{color:var(--accent)}
+.nav-badge{
+  position:absolute;top:6px;right:calc(50% - 18px);
+  width:16px;height:16px;border-radius:50%;
+  background:var(--red);color:#fff;font-size:9px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid var(--bg);
+}
+
+/* ═══════════════════════════════════════════
+   COMMON COMPONENTS
+═══════════════════════════════════════════ */
+
+/* Top bar */
+.topbar{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 18px 8px;
+  position:sticky;top:0;background:rgba(10,11,18,.92);
+  backdrop-filter:blur(12px);z-index:20;
+  border-bottom:1px solid transparent;
+  transition:border-color .2s;
+}
+.topbar.bordered{border-bottom-color:var(--border)}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);letter-spacing:-.5px}
+.logo em{color:var(--accent);font-style:normal}
+.topbar-right{display:flex;gap:8px;align-items:center}
+.icon-btn{
+  width:36px;height:36px;border-radius:11px;
+  border:1px solid var(--border2);background:var(--bg3);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:15px;color:var(--text2);
+  transition:all .2s;
+}
+.icon-btn:hover,.icon-btn:active{background:var(--bg4);border-color:var(--accent);color:var(--accent)}
+.avatar{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:#fff;
+  border:2px solid rgba(79,142,247,.3);
+}
+.back-btn{
+  display:flex;align-items:center;gap:7px;
+  cursor:pointer;color:var(--accent);font-size:13px;font-weight:500;
+  padding:0;background:none;border:none;font-family:'DM Sans',sans-serif;
+}
+.back-btn:hover{opacity:.8}
+
+/* Section header */
+.sec-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sec-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text)}
+.sec-link{font-size:12px;color:var(--accent);cursor:pointer;font-weight:500}
+.sec-link:hover{opacity:.8}
+
+/* Document row */
+.doc-row{
+  background:var(--bg2);border:1px solid var(--border);border-radius:14px;
+  padding:11px 14px;display:flex;align-items:center;gap:12px;
+  margin-bottom:8px;cursor:pointer;
+  transition:border-color .2s,background .2s,transform .15s;
+}
+.doc-row:hover{border-color:var(--accent);background:var(--bg3)}
+.doc-row:active{transform:scale(.98)}
+.doc-icon{
+  width:42px;height:42px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:19px;flex-shrink:0;
+}
+.di-blue{background:rgba(79,142,247,.15)} .di-green{background:rgba(46,204,138,.12)}
+.di-gold{background:rgba(245,200,66,.12)} .di-red{background:rgba(224,82,82,.12)}
+.di-purple{background:rgba(124,92,252,.12)} .di-orange{background:rgba(240,120,64,.12)}
+.di-teal{background:rgba(0,212,170,.12)}
+.doc-info{flex:1;min-width:0}
+.doc-name{font-size:13.5px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-meta{font-size:11px;color:var(--text2);margin-top:2px}
+.status-badge{
+  padding:3px 9px;border-radius:20px;font-size:10.5px;
+  font-weight:600;flex-shrink:0;white-space:nowrap;
+}
+.sb-ok{background:rgba(46,204,138,.12);color:var(--green);border:1px solid rgba(46,204,138,.2)}
+.sb-exp{background:rgba(224,82,82,.12);color:var(--red);border:1px solid rgba(224,82,82,.2)}
+.sb-soon{background:rgba(240,120,64,.12);color:var(--orange);border:1px solid rgba(240,120,64,.2)}
+.sb-miss{background:rgba(74,82,120,.1);color:var(--text3);border:1px solid var(--border)}
+
+/* CTA button */
+.cta{
+  width:100%;padding:15px;
+  background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);
+  border:none;border-radius:14px;
+  color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;
+  cursor:pointer;transition:opacity .2s,transform .15s;
+  letter-spacing:.2px;
+}
+.cta:hover{opacity:.9}
+.cta:active{transform:scale(.98)}
+.cta.outline{background:transparent;border:1.5px solid var(--accent);color:var(--accent)}
+.cta.green-cta{background:linear-gradient(135deg,#1fa870,#2ecc8a)}
+
+/* Search bar */
+.search-bar{
+  display:flex;align-items:center;gap:10px;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:12px;padding:9px 14px;
+  margin:10px 16px 0;
+  transition:border-color .2s;
+}
+.search-bar:focus-within{border-color:var(--accent)}
+.search-bar span{font-size:14px;color:var(--text3)}
+.search-bar input{
+  flex:1;background:none;border:none;outline:none;
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:13.5px;
+}
+.search-bar input::placeholder{color:var(--text3)}
+
+/* Chip bar */
+.chip-bar{
+  display:flex;gap:6px;padding:10px 16px 8px;
+  overflow-x:auto;scrollbar-width:none;flex-shrink:0;
+}
+.chip-bar::-webkit-scrollbar{display:none}
+.chip{
+  flex-shrink:0;padding:5px 13px;border-radius:20px;
+  border:1px solid var(--border2);background:transparent;
+  color:var(--text2);font-size:11.5px;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap;
+}
+.chip.active{background:var(--bg4);border-color:var(--accent);color:var(--accent);font-weight:500}
+.chip:hover:not(.active){border-color:var(--text3)}
+
+/* Toast */
+#toast{
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--bg4);border:1px solid var(--border2);border-radius:12px;
+  padding:10px 18px;font-size:13px;color:var(--text);
+  opacity:0;pointer-events:none;
+  transition:all .3s;z-index:999;white-space:nowrap;
+  box-shadow:var(--shadow);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ═══════════════════════════════════════════
+   HOME SCREEN
+═══════════════════════════════════════════ */
+#screen-home .hero{
+  margin:10px 16px 14px;
+  background:linear-gradient(135deg,#1a2a5e 0%,#2d1b6e 50%,#1a4a5e 100%);
+  border-radius:20px;padding:20px;position:relative;overflow:hidden;
+}
+#screen-home .hero::before{
+  content:'';position:absolute;top:-50px;right:-50px;
+  width:180px;height:180px;
+  background:radial-gradient(circle,rgba(79,142,247,.2),transparent 70%);
+  border-radius:50%;
+}
+#screen-home .hero::after{
+  content:'';position:absolute;bottom:-30px;left:-30px;
+  width:130px;height:130px;
+  background:radial-gradient(circle,rgba(124,92,252,.15),transparent 70%);
+  border-radius:50%;
+}
+.hero-eyebrow{font-size:10.5px;color:rgba(255,255,255,.55);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px}
+.hero-name{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:4px}
+.hero-sub{font-size:12.5px;color:rgba(255,255,255,.65);margin-bottom:14px}
+.hero-tags{display:flex;gap:6px;flex-wrap:wrap}
+.hero-tag{
+  padding:4px 10px;border-radius:8px;font-size:10.5px;font-weight:500;
+  background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);
+  border:1px solid rgba(255,255,255,.12);
+}
+.hero-tag.green{background:rgba(46,204,138,.15);color:#2ecc8a;border-color:rgba(46,204,138,.2)}
+
+/* Stats strip */
+.stats-strip{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  gap:8px;padding:0 16px 14px;
+}
+.stat-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:14px;padding:12px 10px;text-align:center;
+  cursor:pointer;transition:border-color .2s;
+}
+.stat-card:hover{border-color:var(--accent)}
+.stat-num{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--text);line-height:1}
+.stat-num.c-green{color:var(--green)} .stat-num.c-red{color:var(--red)} .stat-num.c-orange{color:var(--orange)}
+.stat-lbl{font-size:10px;color:var(--text2);margin-top:4px;line-height:1.3}
+
+/* Quick actions */
+.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.quick-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:14px;
+  padding:14px;cursor:pointer;transition:all .2s;
+}
+.quick-card:hover{border-color:var(--accent);background:var(--bg3);transform:translateY(-1px)}
+.quick-card:active{transform:scale(.97)}
+.quick-emoji{font-size:22px;margin-bottom:8px;display:block}
+.quick-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.quick-desc{font-size:11px;color:var(--text2)}
+
+/* Alert strip */
+.alert-strip{
+  margin:0 16px 14px;padding:12px 14px;
+  background:rgba(224,82,82,.08);border:1px solid rgba(224,82,82,.2);
+  border-radius:13px;display:flex;align-items:center;gap:10px;cursor:pointer;
+}
+.alert-strip:hover{background:rgba(224,82,82,.12)}
+.alert-dot{width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(224,82,82,.4)}50%{box-shadow:0 0 0 6px rgba(224,82,82,0)}}
+.alert-text{font-size:12.5px;color:var(--text);flex:1}
+.alert-text strong{color:var(--red);font-weight:600}
+
+/* ═══════════════════════════════════════════
+   VAULT SCREEN
+═══════════════════════════════════════════ */
+.cat-grid-overview{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:10px;padding:0 16px 20px;
+}
+.cat-ov-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:16px;
+  padding:14px;cursor:pointer;transition:all .2s;
+}
+.cat-ov-card:hover{border-color:var(--accent);background:var(--bg3)}
+.cat-ov-card:active{transform:scale(.97)}
+.coc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px}
+.coc-icon-wrap{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px}
+.coc-count-chip{
+  font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:8px;
+  background:var(--bg4);color:var(--text2);border:1px solid var(--border2);
+}
+.coc-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px}
+.coc-hint{font-size:10.5px;color:var(--text2);line-height:1.45;min-height:28px}
+.coc-bar{height:3px;background:var(--bg4);border-radius:2px;margin-top:9px;overflow:hidden}
+.coc-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+.coc-add{border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;min-height:120px;gap:6px}
+.coc-add-icon{font-size:26px;color:var(--text3)}
+.coc-add-text{font-size:12.5px;color:var(--text2);font-weight:500}
+.coc-add-sub{font-size:11px;color:var(--text3)}
+
+/* Doc list per category */
+.cat-detail-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px 6px;
+  position:sticky;top:0;background:rgba(10,11,18,.92);
+  backdrop-filter:blur(12px);z-index:15;
+}
+.cat-detail-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text)}
+.cat-detail-sub{font-size:11px;color:var(--text2);margin-top:1px}
+
+.doc-full-item{
+  background:var(--bg2);border:1px solid var(--border);border-radius:14px;
+  margin-bottom:8px;overflow:hidden;
+  transition:border-color .2s;
+}
+.doc-full-item:hover{border-color:var(--border2)}
+.dfi-main{display:flex;align-items:center;gap:11px;padding:11px 14px;cursor:pointer}
+.dfi-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.dfi-info{flex:1;min-width:0}
+.dfi-name{font-size:13px;font-weight:500;color:var(--text)}
+.dfi-sub{font-size:11px;color:var(--text2);margin-top:1.5px}
+.dfi-expiry{
+  font-size:10px;padding:2px 7px;border-radius:6px;margin-top:3px;display:inline-block;font-weight:500;
+}
+.dfi-actions{display:flex;gap:6px;flex-shrink:0}
+.dfi-btn{
+  padding:5px 10px;border-radius:8px;border:1px solid var(--border2);
+  background:transparent;color:var(--text2);font-size:11px;
+  cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;
+}
+.dfi-btn:hover{border-color:var(--accent);color:var(--accent)}
+.dfi-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.dfi-btn.primary:hover{background:var(--accent2);border-color:var(--accent2)}
+
+/* ═══════════════════════════════════════════
+   UPLOAD SCREEN
+═══════════════════════════════════════════ */
+.upload-screen-inner{padding:0 16px 24px}
+.upload-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px}
+.upload-sub{font-size:13px;color:var(--text2);margin-bottom:16px}
+
+.drop-zone{
+  border:2px dashed var(--border2);border-radius:18px;
+  padding:28px 20px;text-align:center;cursor:pointer;
+  transition:all .3s;position:relative;overflow:hidden;
+  background:var(--bg2);margin-bottom:16px;
+}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:rgba(79,142,247,.05)}
+.dz-icon{font-size:36px;margin-bottom:10px;display:block}
+.dz-text{font-size:13.5px;color:var(--text);font-weight:500;margin-bottom:4px}
+.dz-hint{font-size:11.5px;color:var(--text3)}
+.dz-btn{
+  margin-top:12px;padding:8px 22px;background:var(--accent);border:none;
+  border-radius:10px;color:#fff;font-size:12.5px;font-weight:600;
+  font-family:'DM Sans',sans-serif;cursor:pointer;transition:opacity .2s;
+}
+.dz-btn:hover{opacity:.88}
+.dz-processing{display:none;align-items:center;justify-content:center;gap:10px;padding:20px}
+.dz-spinner{width:24px;height:24px;border:2.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* OCR result */
+.ocr-result{
+  background:var(--bg2);border:1.5px solid var(--green);
+  border-radius:14px;padding:14px;margin-bottom:16px;
+  display:none;
+}
+.ocr-header{display:flex;align-items:center;gap:8px;margin-bottom:11px}
+.ocr-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+.ocr-title-txt{font-size:13px;font-weight:600;color:var(--green)}
+.ocr-fields{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.ocr-field{background:var(--bg3);border-radius:9px;padding:8px 10px}
+.ocr-field-lbl{font-size:10px;color:var(--text3);margin-bottom:2px;text-transform:uppercase;letter-spacing:.5px}
+.ocr-field-val{font-size:12.5px;font-weight:500;color:var(--text)}
+
+/* Category picker grid */
+.cat-picker-label{font-size:13px;font-weight:600;color:var(--text);margin-bottom:9px}
+.cat-picker-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:16px}
+.cp-item{
+  padding:8px 6px;border-radius:11px;border:1px solid var(--border);
+  background:var(--bg2);font-size:11px;color:var(--text2);
+  cursor:pointer;text-align:center;transition:all .2s;line-height:1.3;
+}
+.cp-item:hover,.cp-item.selected{border-color:var(--accent);color:var(--accent);background:rgba(79,142,247,.07)}
+.cp-item .cp-emoji{font-size:18px;display:block;margin-bottom:3px}
+
+/* Document name input */
+.form-field{margin-bottom:12px}
+.form-label{font-size:12px;color:var(--text2);margin-bottom:5px;display:block;font-weight:500}
+.form-input{
+  width:100%;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:11px;padding:10px 13px;color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:13.5px;outline:none;
+  transition:border-color .2s;
+}
+.form-input:focus{border-color:var(--accent)}
+.form-input::placeholder{color:var(--text3)}
+
+/* ═══════════════════════════════════════════
+   DOSSIER BUILDER
+═══════════════════════════════════════════ */
+.goal-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:16px;padding:14px 16px;margin-bottom:10px;
+  cursor:pointer;transition:all .2s;
+}
+.goal-card:hover,.goal-card.active{border-color:var(--accent);background:rgba(79,142,247,.05)}
+.goal-card:active{transform:scale(.98)}
+.gc-row{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+.gc-emoji{font-size:22px}
+.gc-meta{flex:1}
+.gc-name{font-size:14px;font-weight:600;color:var(--text)}
+.gc-agency{font-size:11px;color:var(--text2);margin-top:1px}
+.gc-progress-row{display:flex;align-items:center;gap:10px}
+.gc-bar{flex:1;background:var(--bg4);border-radius:3px;height:4px;overflow:hidden}
+.gc-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.gc-progress-label{font-size:11px;color:var(--text2);flex-shrink:0}
+
+/* checklist */
+.checklist-section{margin-top:8px}
+.checklist-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px}
+.check-item{
+  display:flex;align-items:center;gap:10px;padding:9px 0;
+  border-bottom:1px solid var(--border);
+}
+.check-item:last-child{border:none}
+.checkmark{
+  width:22px;height:22px;border-radius:7px;border:1.5px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  cursor:pointer;transition:all .2s;font-size:12px;
+}
+.checkmark.done{background:var(--green);border-color:var(--green);color:#fff;box-shadow:var(--glow-green)}
+.check-label{flex:1;font-size:13px;color:var(--text)}
+.check-label.done{text-decoration:line-through;color:var(--text3)}
+.check-req{font-size:10px;color:var(--red);font-weight:600}
+.check-opt{font-size:10px;color:var(--text3)}
+
+/* ═══════════════════════════════════════════
+   AI ASSISTANT
+═══════════════════════════════════════════ */
+.ai-header{
+  display:flex;align-items:center;gap:11px;
+  padding:12px 16px;background:var(--bg2);
+  border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.ai-avatar{
+  width:40px;height:40px;border-radius:13px;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  box-shadow:var(--glow-blue);
+}
+.ai-name{font-size:14px;font-weight:700;color:var(--text)}
+.ai-status{font-size:11px;color:var(--green);display:flex;align-items:center;gap:4px}
+.ai-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.ai-trained{margin-left:auto;font-size:10.5px;color:var(--text3);text-align:right;line-height:1.4}
+
+.ai-body{display:flex;flex-direction:column;height:100%}
+.ai-messages{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px;scrollbar-width:none}
+.ai-messages::-webkit-scrollbar{display:none}
+.msg-wrap-bot{align-self:flex-start;max-width:86%}
+.msg-wrap-usr{align-self:flex-end;max-width:86%}
+.bubble{padding:10px 14px;border-radius:18px;font-size:13px;line-height:1.55}
+.bubble-bot{background:var(--bg3);color:var(--text);border-radius:4px 18px 18px 18px;border:1px solid var(--border2)}
+.bubble-usr{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-radius:18px 4px 18px 18px}
+.msg-time{font-size:10px;color:var(--text3);margin-top:4px;padding:0 4px}
+
+/* Quick questions */
+.quick-qs{padding:0 16px 8px;display:flex;flex-direction:column;gap:6px}
+.quick-q{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;padding:8px 12px;font-size:12.5px;color:var(--accent);
+  cursor:pointer;transition:all .2s;
+}
+.quick-q:hover{background:var(--bg3);border-color:var(--accent)}
+
+/* AI input */
+.ai-input-bar{
+  display:flex;align-items:flex-end;gap:8px;
+  padding:10px 16px 16px;
+  border-top:1px solid var(--border);
+  background:var(--bg);
+}
+.ai-textarea{
+  flex:1;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:12px;padding:9px 13px;color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:13px;outline:none;
+  resize:none;min-height:38px;max-height:90px;line-height:1.45;
+  transition:border-color .2s;overflow:hidden;
+}
+.ai-textarea:focus{border-color:var(--accent)}
+.ai-textarea::placeholder{color:var(--text3)}
+.ai-send{
+  width:38px;height:38px;border-radius:11px;
+  background:var(--accent);border:none;
+  color:#fff;font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .2s;
+  box-shadow:var(--glow-blue);
+}
+.ai-send:hover{background:var(--accent2);transform:scale(1.05)}
+.ai-send:active{transform:scale(.95)}
+
+/* ═══════════════════════════════════════════
+   PROFILE SCREEN
+═══════════════════════════════════════════ */
+.profile-hero{
+  margin:12px 16px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:20px;padding:20px;text-align:center;position:relative;overflow:hidden;
+}
+.profile-hero::before{
+  content:'';position:absolute;top:-40px;left:50%;transform:translateX(-50%);
+  width:200px;height:200px;
+  background:radial-gradient(circle,rgba(79,142,247,.1),transparent 70%);border-radius:50%;
+}
+.profile-avatar-lg{
+  width:70px;height:70px;border-radius:50%;margin:0 auto 10px;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;font-weight:700;color:#fff;
+  border:3px solid rgba(79,142,247,.3);box-shadow:var(--glow-blue);
+}
+.profile-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:3px}
+.profile-sub{font-size:12.5px;color:var(--text2)}
+.profile-tags{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+
+.profile-section{padding:0 16px;margin-bottom:20px}
+.profile-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.profile-row{
+  display:flex;align-items:center;gap:12px;padding:13px 16px;
+  border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s;
+}
+.profile-row:last-child{border:none}
+.profile-row:hover{background:var(--bg3)}
+.profile-row-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.profile-row-info{flex:1}
+.profile-row-label{font-size:13.5px;color:var(--text);font-weight:500}
+.profile-row-sub{font-size:11px;color:var(--text2);margin-top:1px}
+.profile-row-right{font-size:13px;color:var(--text3)}
+.profile-row-right.on{color:var(--green)}
+.toggle-wrap{display:flex;align-items:center}
+.toggle{position:relative;width:42px;height:24px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:var(--bg4);border-radius:12px;transition:background .2s;border:1px solid var(--border2)}
+.toggle input:checked+.toggle-track{background:var(--accent);border-color:var(--accent)}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.toggle input:checked~.toggle-thumb{transform:translateX(18px)}
+
+/* GDPR notice */
+.gdpr-notice{
+  margin:0 16px 20px;background:rgba(46,204,138,.06);
+  border:1px solid rgba(46,204,138,.15);border-radius:14px;padding:13px 15px;
+  display:flex;gap:10px;align-items:flex-start;
+}
+.gdpr-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.gdpr-text{font-size:12px;color:var(--text2);line-height:1.55}
+.gdpr-text strong{color:var(--green);font-weight:600}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- Status bar -->
+  <div id="status-bar">
+    <span class="sb-time" id="clock">09:41</span>
+    <div class="sb-icons">
+      <div class="signal"><span></span><span></span><span></span></div>
+      <span class="sb-5g">5G</span>
+      <div class="battery"><div class="battery-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- Language bar -->
+  <div id="lang-bar">
+    <button class="lang-pill active" onclick="setLang('fr')">🇫🇷 Français</button>
+    <button class="lang-pill" onclick="setLang('ar')">🇸🇦 العربية</button>
+    <button class="lang-pill" onclick="setLang('en')">🇬🇧 English</button>
+    <button class="lang-pill" onclick="setLang('pt')">🇵🇹 Português</button>
+    <button class="lang-pill" onclick="setLang('es')">🇪🇸 Español</button>
+    <button class="lang-pill" onclick="setLang('bn')">🇧🇩 বাংলা</button>
+    <button class="lang-pill" onclick="setLang('hi')">🇮🇳 हिन्दी</button>
+    <button class="lang-pill" onclick="setLang('ta')">🇮🇳 தமிழ்</button>
+    <button class="lang-pill" onclick="setLang('tr')">🇹🇷 Türkçe</button>
+    <button class="lang-pill" onclick="setLang('it')">🇮🇹 Italiano</button>
+  </div>
+
+  <!-- ═══ SCREENS ═══ -->
+  <div id="screens">
+
+    <!-- ══ HOME ══ -->
+    <div class="screen active" id="screen-home">
+      <div class="topbar" id="home-topbar">
+        <div class="logo">Dossier<em>Zen</em></div>
+        <div class="topbar-right">
+          <div class="icon-btn" onclick="showToast('🔔 Aucune nouvelle notification')">🔔</div>
+          <div class="avatar">AG</div>
+        </div>
+      </div>
+
+      <div class="hero">
+        <div class="hero-eyebrow" data-i18n="hero_label">Bonjour</div>
+        <div class="hero-name" data-i18n="hero_name">Karim Aziz 👋</div>
+        <div class="hero-sub" data-i18n="hero_sub">Votre coffre-fort administratif sécurisé</div>
+        <div class="hero-tags">
+          <span class="hero-tag green" data-i18n="hero_tag1">🇫🇷 Hébergé France</span>
+          <span class="hero-tag" data-i18n="hero_tag2">🔒 RGPD Conforme</span>
+          <span class="hero-tag" data-i18n="hero_tag3">☁ AWS EU-West-3</span>
+        </div>
+      </div>
+
+      <!-- Alert -->
+      <div class="alert-strip" onclick="navigate('vault')">
+        <div class="alert-dot"></div>
+        <div class="alert-text"><strong data-i18n="alert_bold">2 documents expirés</strong> — <span data-i18n="alert_text">cliquez pour voir</span></div>
+        <span style="color:var(--text3);font-size:14px">›</span>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-strip">
+        <div class="stat-card" onclick="navigate('vault')">
+          <div class="stat-num c-green" id="stat-total">24</div>
+          <div class="stat-lbl" data-i18n="stat1">Documents stockés</div>
+        </div>
+        <div class="stat-card" onclick="navigate('vault')">
+          <div class="stat-num c-red">2</div>
+          <div class="stat-lbl" data-i18n="stat2">Expirés</div>
+        </div>
+        <div class="stat-card" onclick="navigate('vault')">
+          <div class="stat-num c-orange">5</div>
+          <div class="stat-lbl" data-i18n="stat3">Bientôt</div>
+        </div>
+      </div>
+
+      <!-- Recent docs -->
+      <div style="padding:0 16px 14px">
+        <div class="sec-header">
+          <div class="sec-title" data-i18n="recent_title">Récents</div>
+          <div class="sec-link" onclick="navigate('vault')" data-i18n="see_all">Voir tout</div>
+        </div>
+        <div class="doc-row" onclick="navigate('vault')">
+          <div class="doc-icon di-green">🏥</div>
+          <div class="doc-info"><div class="doc-name" data-i18n="doc1">Carte Vitale</div><div class="doc-meta">CPAM · <span data-i18n="doc1_meta">Valable indéfiniment</span></div></div>
+          <span class="status-badge sb-ok">✓</span>
+        </div>
+        <div class="doc-row" onclick="navigate('vault')">
+          <div class="doc-icon di-blue">🪪</div>
+          <div class="doc-info"><div class="doc-name" data-i18n="doc2">Carte de séjour</div><div class="doc-meta"><span data-i18n="doc2_meta">Préfecture · exp: 12 déc 2025</span></div></div>
+          <span class="status-badge sb-soon">⚡</span>
+        </div>
+        <div class="doc-row" onclick="navigate('vault')">
+          <div class="doc-icon di-orange">🚇</div>
+          <div class="doc-info"><div class="doc-name" data-i18n="doc3">Carte Navigo</div><div class="doc-meta">Île-de-France Mobilités</div></div>
+          <span class="status-badge sb-ok">✓</span>
+        </div>
+        <div class="doc-row" onclick="navigate('vault')">
+          <div class="doc-icon di-red">📋</div>
+          <div class="doc-info"><div class="doc-name" data-i18n="doc4">Avis d'imposition</div><div class="doc-meta"><span data-i18n="doc4_meta">DGFiP · Expiré (+90j)</span></div></div>
+          <span class="status-badge sb-exp">⚠</span>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div style="padding:0 16px 24px">
+        <div class="sec-title" style="margin-bottom:10px" data-i18n="quick_title">Actions rapides</div>
+        <div class="quick-grid">
+          <div class="quick-card" onclick="navigate('upload')">
+            <span class="quick-emoji">📸</span>
+            <div class="quick-title" data-i18n="qa1">Scanner</div>
+            <div class="quick-desc" data-i18n="qa1d">Ajouter via OCR</div>
+          </div>
+          <div class="quick-card" onclick="navigate('dossier')">
+            <span class="quick-emoji">📁</span>
+            <div class="quick-title" data-i18n="qa2">Construire</div>
+            <div class="quick-desc" data-i18n="qa2d">Créer un dossier</div>
+          </div>
+          <div class="quick-card" onclick="navigate('ai')">
+            <span class="quick-emoji">🤖</span>
+            <div class="quick-title" data-i18n="qa3">IA Admin</div>
+            <div class="quick-desc" data-i18n="qa3d">Poser une question</div>
+          </div>
+          <div class="quick-card" onclick="navigate('dossier')">
+            <span class="quick-emoji">📤</span>
+            <div class="quick-title" data-i18n="qa4">PDF Fusionné</div>
+            <div class="quick-desc" data-i18n="qa4d">Exporter &lt;2MB</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ VAULT ══ -->
+    <div class="screen slide-right" id="screen-vault">
+      <div class="topbar">
+        <div class="logo" style="font-size:18px" data-i18n="vault_title">Coffre-fort</div>
+        <div class="topbar-right">
+          <div class="icon-btn" onclick="navigate('upload')">＋</div>
+          <div class="icon-btn" onclick="toggleVaultSearch()">🔍</div>
+        </div>
+      </div>
+
+      <div class="search-bar" id="vault-search-bar" style="display:none">
+        <span>🔍</span>
+        <input id="vault-search-input" placeholder="Rechercher..." oninput="filterVaultSearch(this.value)"/>
+      </div>
+
+      <!-- Category chips -->
+      <div class="chip-bar" id="vault-chips">
+        <button class="chip active" data-cat="all" onclick="selectCat(this,'all')" data-i18n-chip="all">📋 Tous</button>
+        <button class="chip" data-cat="identity" onclick="selectCat(this,'identity')" data-i18n-chip="identity">🪪 Identité</button>
+        <button class="chip" data-cat="health" onclick="selectCat(this,'health')" data-i18n-chip="health">🏥 Santé</button>
+        <button class="chip" data-cat="transport" onclick="selectCat(this,'transport')" data-i18n-chip="transport">🚇 Transport</button>
+        <button class="chip" data-cat="housing" onclick="selectCat(this,'housing')" data-i18n-chip="housing">🏠 Logement</button>
+        <button class="chip" data-cat="work" onclick="selectCat(this,'work')" data-i18n-chip="work">💼 Travail</button>
+        <button class="chip" data-cat="tax" onclick="selectCat(this,'tax')" data-i18n-chip="tax">💰 Fiscal</button>
+        <button class="chip" data-cat="social" onclick="selectCat(this,'social')" data-i18n-chip="social">👨‍👩‍👧 Social</button>
+        <button class="chip" data-cat="immigration" onclick="selectCat(this,'immigration')" data-i18n-chip="immigration">✈️ Immigration</button>
+        <button class="chip" data-cat="banking" onclick="selectCat(this,'banking')" data-i18n-chip="banking">🏦 Banque</button>
+        <button class="chip" data-cat="education" onclick="selectCat(this,'education')" data-i18n-chip="education">🎓 Études</button>
+        <button class="chip" data-cat="disability" onclick="selectCat(this,'disability')" data-i18n-chip="disability">♿ Handicap</button>
+      </div>
+
+      <!-- Overview grid -->
+      <div id="vault-overview">
+        <div class="cat-grid-overview" id="cat-grid"></div>
+      </div>
+
+      <!-- Per-category document list -->
+      <div id="vault-cat-detail" style="display:none;padding:0 16px 20px">
+        <div class="cat-detail-header" style="position:relative;padding-left:0;padding-right:0;margin-bottom:8px">
+          <div>
+            <div class="cat-detail-title" id="cat-detail-title"></div>
+            <div class="cat-detail-sub" id="cat-detail-sub"></div>
+          </div>
+          <button class="back-btn" onclick="showAllCats()">← <span data-i18n="all_cats">Toutes</span></button>
+        </div>
+        <div id="cat-doc-list"></div>
+        <button class="cta" style="margin-top:4px" onclick="navigate('upload')">＋ <span data-i18n="add_doc">Ajouter un document</span></button>
+      </div>
+    </div>
+
+    <!-- ══ UPLOAD ══ -->
+    <div class="screen slide-right" id="screen-upload">
+      <div class="topbar">
+        <button class="back-btn" onclick="navigateBack()">← <span data-i18n="back">Retour</span></button>
+        <div class="topbar-right"><div class="icon-btn" onclick="showToast('💡 OCR extrait automatiquement la date, l\'adresse et l\'émetteur')">?</div></div>
+      </div>
+      <div class="upload-screen-inner">
+        <div class="upload-title" data-i18n="upload_title">Ajouter un document</div>
+        <div class="upload-sub" data-i18n="upload_sub">Photographiez ou importez — OCR automatique inclus</div>
+
+        <!-- Drop zone -->
+        <div class="drop-zone" id="drop-zone"
+          ondragover="event.preventDefault();this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="handleFileDrop(event)">
+          <div id="dz-idle">
+            <span class="dz-icon">📷</span>
+            <div class="dz-text" data-i18n="dz_text">Prendre une photo ou glisser-déposer</div>
+            <div class="dz-hint" data-i18n="dz_hint">JPG · PNG · PDF · Max 10MB</div>
+            <button class="dz-btn" onclick="triggerFileInput()" data-i18n="dz_btn">Choisir un fichier</button>
+            <input type="file" id="file-input" accept="image/*,application/pdf" style="display:none" onchange="handleFileSelect(this)"/>
+          </div>
+          <div class="dz-processing" id="dz-processing">
+            <div class="dz-spinner"></div>
+            <span data-i18n="dz_processing">Analyse OCR en cours...</span>
+          </div>
+        </div>
+
+        <!-- OCR Result -->
+        <div class="ocr-result" id="ocr-result">
+          <div class="ocr-header">
+            <div class="ocr-dot"></div>
+            <div class="ocr-title-txt" data-i18n="ocr_detected">OCR détecté automatiquement</div>
+          </div>
+          <div class="ocr-fields" id="ocr-fields"></div>
+        </div>
+
+        <!-- Document name -->
+        <div class="form-field">
+          <label class="form-label" data-i18n="doc_name_label">Nom du document</label>
+          <input class="form-input" id="doc-name-input" placeholder="ex: Justificatif de domicile EDF"/>
+        </div>
+
+        <!-- Category picker -->
+        <div class="cat-picker-label" data-i18n="cat_label">Catégorie</div>
+        <div class="cat-picker-grid" id="cat-picker-grid">
+          <div class="cp-item" data-cat="identity" onclick="pickCat(this)"><span class="cp-emoji">🪪</span><span data-i18n="cat_identity">Identité</span></div>
+          <div class="cp-item" data-cat="health" onclick="pickCat(this)"><span class="cp-emoji">🏥</span><span data-i18n="cat_health">Santé</span></div>
+          <div class="cp-item" data-cat="transport" onclick="pickCat(this)"><span class="cp-emoji">🚇</span><span data-i18n="cat_transport">Transport</span></div>
+          <div class="cp-item" data-cat="housing" onclick="pickCat(this)"><span class="cp-emoji">🏠</span><span data-i18n="cat_housing">Logement</span></div>
+          <div class="cp-item" data-cat="work" onclick="pickCat(this)"><span class="cp-emoji">💼</span><span data-i18n="cat_work">Travail</span></div>
+          <div class="cp-item" data-cat="tax" onclick="pickCat(this)"><span class="cp-emoji">💰</span><span data-i18n="cat_tax">Fiscal</span></div>
+          <div class="cp-item" data-cat="social" onclick="pickCat(this)"><span class="cp-emoji">👨‍👩‍👧</span><span data-i18n="cat_social">Social</span></div>
+          <div class="cp-item" data-cat="immigration" onclick="pickCat(this)"><span class="cp-emoji">✈️</span><span data-i18n="cat_immigration">Immigration</span></div>
+          <div class="cp-item" data-cat="banking" onclick="pickCat(this)"><span class="cp-emoji">🏦</span><span data-i18n="cat_banking">Banque</span></div>
+          <div class="cp-item" data-cat="education" onclick="pickCat(this)"><span class="cp-emoji">🎓</span><span data-i18n="cat_education">Études</span></div>
+          <div class="cp-item" data-cat="disability" onclick="pickCat(this)"><span class="cp-emoji">♿</span><span data-i18n="cat_disability">Handicap</span></div>
+          <div class="cp-item" data-cat="family" onclick="pickCat(this)"><span class="cp-emoji">👶</span><span data-i18n="cat_family">Famille</span></div>
+        </div>
+
+        <button class="cta" onclick="saveDocument()" data-i18n="save_doc">💾 Enregistrer dans le coffre</button>
+      </div>
+    </div>
+
+    <!-- ══ DOSSIER BUILDER ══ -->
+    <div class="screen slide-right" id="screen-dossier">
+      <div class="topbar">
+        <div class="logo" style="font-size:18px" data-i18n="dossier_title">Constructeur</div>
+        <div class="topbar-right"><div class="icon-btn" onclick="showToast('ℹ️ Sélectionnez un objectif pour voir la liste de documents requise')">ℹ</div></div>
+      </div>
+
+      <div style="padding:0 16px 8px">
+        <div class="sec-title" style="margin-bottom:10px" data-i18n="choose_goal">Choisir un objectif</div>
+
+        <!-- Goals -->
+        <div class="goal-card active" onclick="selectGoal(this,'rental')">
+          <div class="gc-row"><span class="gc-emoji">🏠</span><div class="gc-meta"><div class="gc-name" data-i18n="goal1">Location d'appartement</div><div class="gc-agency">Agence / Propriétaire</div></div></div>
+          <div class="gc-progress-row"><div class="gc-bar"><div class="gc-fill" style="width:66%"></div></div><div class="gc-progress-label" data-i18n="goal1_prog">4 / 6 docs</div></div>
+        </div>
+        <div class="goal-card" onclick="selectGoal(this,'sejour')">
+          <div class="gc-row"><span class="gc-emoji">🪪</span><div class="gc-meta"><div class="gc-name" data-i18n="goal2">Renouvellement titre de séjour</div><div class="gc-agency">Préfecture · ANEF</div></div></div>
+          <div class="gc-progress-row"><div class="gc-bar"><div class="gc-fill" style="width:60%"></div></div><div class="gc-progress-label" data-i18n="goal2_prog">3 / 5 docs</div></div>
+        </div>
+        <div class="goal-card" onclick="selectGoal(this,'caf')">
+          <div class="gc-row"><span class="gc-emoji">👶</span><div class="gc-meta"><div class="gc-name" data-i18n="goal3">Allocations CAF / APL</div><div class="gc-agency">CAF · service-public.fr</div></div></div>
+          <div class="gc-progress-row"><div class="gc-bar"><div class="gc-fill" style="width:28%"></div></div><div class="gc-progress-label" data-i18n="goal3_prog">2 / 7 docs</div></div>
+        </div>
+        <div class="goal-card" onclick="selectGoal(this,'ants')">
+          <div class="gc-row"><span class="gc-emoji">🚗</span><div class="gc-meta"><div class="gc-name" data-i18n="goal4">Permis de conduire / ANTS</div><div class="gc-agency">ANTS · Ministère Intérieur</div></div></div>
+          <div class="gc-progress-row"><div class="gc-bar"><div class="gc-fill" style="width:100%"></div></div><div class="gc-progress-label" data-i18n="goal4_prog">4 / 4 ✓</div></div>
+        </div>
+        <div class="goal-card" onclick="selectGoal(this,'vitale')">
+          <div class="gc-row"><span class="gc-emoji">🏥</span><div class="gc-meta"><div class="gc-name" data-i18n="goal5">Renouvellement Carte Vitale</div><div class="gc-agency">CPAM · Ameli</div></div></div>
+          <div class="gc-progress-row"><div class="gc-bar"><div class="gc-fill" style="width:50%"></div></div><div class="gc-progress-label" data-i18n="goal5_prog">1 / 2 docs</div></div>
+        </div>
+        <div class="goal-card" onclick="selectGoal(this,'school')">
+          <div class="gc-row"><span class="gc-emoji">🎓</span><div class="gc-meta"><div class="gc-name" data-i18n="goal6">Inscription scolaire / universitaire</div><div class="gc-agency">Rectorat · Parcoursup · Campus France</div></div></div>
+          <div class="gc-progress-row"><div class="gc-bar"><div class="gc-fill" style="width:40%"></div></div><div class="gc-progress-label" data-i18n="goal6_prog">2 / 5 docs</div></div>
+        </div>
+        <div class="goal-card" onclick="selectGoal(this,'emploi')">
+          <div class="gc-row"><span class="gc-emoji">💼</span><div class="gc-meta"><div class="gc-name" data-i18n="goal7">Demande d'emploi / ARE</div><div class="gc-agency">France Travail (ex Pôle Emploi)</div></div></div>
+          <div class="gc-progress-row"><div class="gc-bar"><div class="gc-fill" style="width:50%"></div></div><div class="gc-progress-label" data-i18n="goal7_prog">2 / 4 docs</div></div>
+        </div>
+      </div>
+
+      <!-- Checklist -->
+      <div style="padding:0 16px 24px" id="checklist-section">
+        <div class="checklist-title" data-i18n="checklist_title">Liste de vérification — Location</div>
+        <div id="checklist-items">
+          <div class="check-item"><div class="checkmark done" onclick="toggleCheck(this)">✓</div><span class="check-label done" data-i18n="c1">Justificatif de domicile</span><span class="check-req" data-i18n="req">Obligatoire</span></div>
+          <div class="check-item"><div class="checkmark done" onclick="toggleCheck(this)">✓</div><span class="check-label done" data-i18n="c2">3 fiches de paie</span><span class="check-req" data-i18n="req">Obligatoire</span></div>
+          <div class="check-item"><div class="checkmark done" onclick="toggleCheck(this)">✓</div><span class="check-label done" data-i18n="c3">Pièce d'identité (CNI/Passeport)</span><span class="check-req" data-i18n="req">Obligatoire</span></div>
+          <div class="check-item"><div class="checkmark done" onclick="toggleCheck(this)">✓</div><span class="check-label done" data-i18n="c4">Avis d'imposition</span><span class="check-req" data-i18n="req">Obligatoire</span></div>
+          <div class="check-item"><div class="checkmark" onclick="toggleCheck(this)"></div><span class="check-label" data-i18n="c5">Contrat de travail</span><span class="check-opt" data-i18n="opt">Optionnel</span></div>
+          <div class="check-item"><div class="checkmark" onclick="toggleCheck(this)"></div><span class="check-label" data-i18n="c6">Garant / caution solidaire</span><span class="check-opt" data-i18n="opt">Optionnel</span></div>
+        </div>
+        <button class="cta" style="margin-top:14px" onclick="exportPDF()">📤 <span data-i18n="export_pdf">Exporter PDF fusionné (&lt;2MB)</span></button>
+      </div>
+    </div>
+
+    <!-- ══ AI ASSISTANT ══ -->
+    <div class="screen slide-right" id="screen-ai">
+      <div style="display:flex;flex-direction:column;height:100%">
+        <div class="ai-header">
+          <div class="ai-avatar">🤖</div>
+          <div>
+            <div class="ai-name">ZenBot</div>
+            <div class="ai-status" data-i18n="ai_online">En ligne</div>
+          </div>
+          <div class="ai-trained" data-i18n="ai_trained">Formé sur<br>procédures 2026</div>
+        </div>
+
+        <div class="ai-messages" id="ai-messages">
+          <div class="msg-wrap-bot">
+            <div class="bubble bubble-bot" data-i18n="ai_greeting">Bonjour ! Je suis ZenBot 🤖 — votre assistant administratif français. Je suis formé sur toutes les procédures 2026 : CAF, CPAM, ANEF, impôts, carte de séjour, Navigo... Posez-moi n'importe quelle question !</div>
+            <div class="msg-time">09:38</div>
+          </div>
+          <div class="msg-wrap-usr">
+            <div class="bubble bubble-usr" data-i18n="ai_q1">C'est quoi le quotient familial ?</div>
+            <div class="msg-time" style="text-align:right">09:39</div>
+          </div>
+          <div class="msg-wrap-bot">
+            <div class="bubble bubble-bot" data-i18n="ai_a1">Le <strong>quotient familial</strong> divise votre revenu imposable par un nombre de « parts » selon la composition de votre foyer. Exemple : couple + 2 enfants = 3 parts. Plus vous avez de parts → moins vous payez d'impôt 📊<br><br>Vous pouvez simuler votre QF sur <em>impots.gouv.fr</em>.</div>
+            <div class="msg-time">09:39</div>
+          </div>
+        </div>
+
+        <div class="quick-qs" id="quick-qs">
+          <div class="quick-q" onclick="sendQuickQ(this)" data-i18n="qq1">💬 Comment renouveler mon titre de séjour ?</div>
+          <div class="quick-q" onclick="sendQuickQ(this)" data-i18n="qq2">💬 Qu'est-ce que l'APL et comment en bénéficier ?</div>
+          <div class="quick-q" onclick="sendQuickQ(this)" data-i18n="qq3">💬 Documents nécessaires pour la Carte Vitale ?</div>
+          <div class="quick-q" onclick="sendQuickQ(this)" data-i18n="qq4">💬 C'est quoi la Carte Mobilité Inclusion (CMI) ?</div>
+        </div>
+
+        <div class="ai-input-bar">
+          <textarea class="ai-textarea" id="ai-input" rows="1" placeholder="Posez votre question..." oninput="autoResize(this)" onkeydown="handleAiKey(event)"></textarea>
+          <button class="ai-send" onclick="sendAiMsg()">↑</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PROFILE ══ -->
+    <div class="screen slide-right" id="screen-profile">
+      <div class="topbar">
+        <div class="logo" style="font-size:18px" data-i18n="profile_title">Mon profil</div>
+        <div class="topbar-right"><div class="icon-btn" onclick="showToast('⚙️ Paramètres')">⚙️</div></div>
+      </div>
+
+      <div class="profile-hero">
+        <div class="profile-avatar-lg">KA</div>
+        <div class="profile-name">Karim Aziz</div>
+        <div class="profile-sub">karim.aziz@email.com</div>
+        <div class="profile-tags">
+          <span class="hero-tag green" data-i18n="plan_premium">✨ Abonnement Premium</span>
+          <span class="hero-tag" data-i18n="plan_since">Depuis jan 2025</span>
+        </div>
+      </div>
+
+      <!-- Storage bar -->
+      <div style="padding:0 16px 14px">
+        <div class="sec-header">
+          <div class="sec-title" data-i18n="storage_title">Stockage</div>
+          <div class="sec-link" style="color:var(--text2)">24 / ∞ <span data-i18n="docs">docs</span></div>
+        </div>
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:13px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:12px;color:var(--text2)">
+            <span>48 MB / illimité</span><span style="color:var(--green)" data-i18n="storage_ok">Espace libre</span>
+          </div>
+          <div style="background:var(--bg4);border-radius:4px;height:5px;overflow:hidden">
+            <div style="width:12%;height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:4px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div class="profile-section">
+        <div class="sec-title" style="margin-bottom:10px" data-i18n="settings_title">Paramètres</div>
+        <div class="profile-card">
+          <div class="profile-row">
+            <div class="profile-row-icon di-blue">🔔</div>
+            <div class="profile-row-info">
+              <div class="profile-row-label" data-i18n="notif_label">Notifications expiration</div>
+              <div class="profile-row-sub" data-i18n="notif_sub">Alerte 30j avant expiration</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked onchange="showToast('🔔 Notifications activées')"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+          </div>
+          <div class="profile-row">
+            <div class="profile-row-icon di-green">🔒</div>
+            <div class="profile-row-info">
+              <div class="profile-row-label" data-i18n="biometric_label">Déverrouillage biométrique</div>
+              <div class="profile-row-sub" data-i18n="biometric_sub">Face ID / Empreinte</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked onchange="showToast('🔒 Biométrie mise à jour')"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+          </div>
+          <div class="profile-row">
+            <div class="profile-row-icon di-orange">🌍</div>
+            <div class="profile-row-info">
+              <div class="profile-row-label" data-i18n="lang_label">Langue de l'application</div>
+              <div class="profile-row-sub" id="current-lang-display">Français</div>
+            </div>
+            <span class="profile-row-right">›</span>
+          </div>
+          <div class="profile-row">
+            <div class="profile-row-icon di-purple">☁</div>
+            <div class="profile-row-info">
+              <div class="profile-row-label" data-i18n="backup_label">Sauvegarde automatique</div>
+              <div class="profile-row-sub" data-i18n="backup_sub">AWS S3 EU-West-3 (Paris)</div>
+            </div>
+            <span class="profile-row-right on">● ON</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- GDPR -->
+      <div class="gdpr-notice">
+        <div class="gdpr-icon">🛡️</div>
+        <div class="gdpr-text" data-i18n="gdpr_text"><strong>RGPD conforme.</strong> Vos données sont hébergées en France (AWS EU-West-3, Paris). Aucun partage avec des tiers. Vous pouvez supprimer votre compte à tout moment.</div>
+      </div>
+
+      <!-- Danger zone -->
+      <div style="padding:0 16px 30px">
+        <button class="cta outline" onclick="showToast('⚠️ Fonctionnalité disponible en production')" data-i18n="delete_account">🗑 Supprimer mon compte et mes données</button>
+      </div>
+    </div>
+
+  </div><!-- /screens -->
+
+  <!-- Bottom nav -->
+  <div id="bottom-nav">
+    <div class="nav-item active" id="nav-home" onclick="navigate('home')">
+      <div class="nav-icon">🏠</div>
+      <span class="nav-label" data-i18n="nav_home">Accueil</span>
+    </div>
+    <div class="nav-item" id="nav-vault" onclick="navigate('vault')">
+      <div class="nav-icon">🗄️<div class="nav-badge">2</div></div>
+      <span class="nav-label" data-i18n="nav_vault">Coffre</span>
+    </div>
+    <div class="nav-item" id="nav-dossier" onclick="navigate('dossier')">
+      <div class="nav-icon">📁</div>
+      <span class="nav-label" data-i18n="nav_dossier">Dossiers</span>
+    </div>
+    <div class="nav-item" id="nav-ai" onclick="navigate('ai')">
+      <div class="nav-icon">🤖</div>
+      <span class="nav-label" data-i18n="nav_ai">IA Admin</span>
+    </div>
+    <div class="nav-item" id="nav-profile" onclick="navigate('profile')">
+      <div class="nav-icon">👤</div>
+      <span class="nav-label" data-i18n="nav_profile">Profil</span>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+</div><!-- /app -->
+
+<script>
+/* ═══════════════════════════════════════════
+   DOCUMENT DATA
+═══════════════════════════════════════════ */
+const CAT_META = {
+  identity:{icon:'🪪',color:'di-blue',name_fr:'Identité',hint_fr:'CNI, passeport, permis de conduire, acte de naissance, livret de famille',total:6,done:4,fill:67,bar:'#4f8ef7'},
+  health:{icon:'🏥',color:'di-green',name_fr:'Santé',hint_fr:'Carte Vitale, attestation Sécu, mutuelle, ordonnances, dossier médical',total:5,done:3,fill:60,bar:'#2ecc8a'},
+  transport:{icon:'🚇',color:'di-orange',name_fr:'Transport',hint_fr:'Carte Navigo, carte grise, vignette Crit\'Air, assurance véhicule',total:4,done:2,fill:50,bar:'#f5c842'},
+  housing:{icon:'🏠',color:'di-purple',name_fr:'Logement',hint_fr:'Bail, quittances, facture EDF, eau, télécom, assurance habitation',total:6,done:6,fill:100,bar:'#7c5cfc'},
+  work:{icon:'💼',color:'di-blue',name_fr:'Travail',hint_fr:'Contrat, fiches de paie ×3, attestation employeur, Pôle Emploi',total:4,done:4,fill:100,bar:'#4f8ef7'},
+  tax:{icon:'💰',color:'di-red',name_fr:'Fiscal',hint_fr:'Avis d\'imposition, déclaration revenus, attestation fiscale CERFA',total:3,done:1,fill:33,bar:'#e05252'},
+  social:{icon:'👨‍👩‍👧',color:'di-green',name_fr:'Social / CAF',hint_fr:'Attestation CAF, APL, RSA, allocations familiales, ARE chômage',total:5,done:3,fill:60,bar:'#2ecc8a'},
+  immigration:{icon:'✈️',color:'di-blue',name_fr:'Immigration',hint_fr:'Titre de séjour, visa VLS-TS, attestation OFII, récépissé ANEF',total:4,done:2,fill:50,bar:'#4f8ef7'},
+  banking:{icon:'🏦',color:'di-gold',name_fr:'Banque',hint_fr:'RIB, relevés de compte ×3, attestation assurance habitation',total:3,done:3,fill:100,bar:'#f5c842'},
+  education:{icon:'🎓',color:'di-purple',name_fr:'Études',hint_fr:'Diplômes, relevés de notes, carte étudiante, certificat scolarité',total:4,done:2,fill:50,bar:'#7c5cfc'},
+  disability:{icon:'♿',color:'di-orange',name_fr:'Handicap',hint_fr:'Carte Mobilité Inclusion (CMI), attestation RQTH, dossier MDPH',total:2,done:1,fill:50,bar:'#f07840'},
+};
+
+const DOC_DATA = {
+  identity:[
+    {icon:'🪪',name:"Carte Nationale d'Identité (CNI)",expiry:'2034-06-01',status:'ok',meta:'Ministère Intérieur'},
+    {icon:'📘',name:'Passeport biométrique',expiry:'2029-03-15',status:'ok',meta:'Sous-préfecture'},
+    {icon:'🚗',name:'Permis de conduire',expiry:'2033-01-01',status:'ok',meta:'ANTS'},
+    {icon:'📸',name:"Photo d'identité officielle",expiry:null,status:'ok',meta:'Format biométrique'},
+    {icon:'📜',name:'Acte de naissance',expiry:null,status:'miss',meta:'Mairie / Consulat'},
+    {icon:'💍',name:'Livret de famille',expiry:null,status:'miss',meta:'Mairie'},
+  ],
+  health:[
+    {icon:'🏥',name:'Carte Vitale',expiry:null,status:'ok',meta:'CPAM · N° sécu valide'},
+    {icon:'📋',name:'Attestation Sécurité Sociale',expiry:'2025-12-31',status:'ok',meta:'Ameli.fr'},
+    {icon:'🛡️',name:'Attestation Mutuelle complémentaire',expiry:'2025-12-31',status:'soon',meta:'Harmonie / Malakoff...'},
+    {icon:'💊',name:'Ordonnances médicales',expiry:'2025-06-01',status:'exp',meta:'Médecin traitant'},
+    {icon:'📁',name:'Dossier médical partagé (DMP)',expiry:null,status:'miss',meta:'Mon Espace Santé'},
+  ],
+  transport:[
+    {icon:'🚇',name:'Carte Navigo Liberté+',expiry:null,status:'ok',meta:'Île-de-France Mobilités'},
+    {icon:'🚗',name:'Carte grise (certificat immat.)',expiry:null,status:'ok',meta:'ANTS'},
+    {icon:'🅿️',name:"Vignette Crit'Air",expiry:null,status:'miss',meta:'Ministère Transition Éco.'},
+    {icon:'🛡️',name:'Attestation assurance auto',expiry:'2025-12-31',status:'miss',meta:'Assureur'},
+  ],
+  housing:[
+    {icon:'🏠',name:'Contrat de bail',expiry:null,status:'ok',meta:'Notaire / Agence'},
+    {icon:'🧾',name:'Quittance de loyer',expiry:null,status:'ok',meta:'Avril 2025'},
+    {icon:'⚡',name:'Facture EDF / Engie',expiry:'2025-07-15',status:'soon',meta:'Justif. domicile · avr 2025'},
+    {icon:'💧',name:'Facture eau / Veolia / Suez',expiry:'2025-06-20',status:'soon',meta:'Justif. domicile'},
+    {icon:'📡',name:'Facture télécom / Internet',expiry:'2025-07-01',status:'ok',meta:'Orange / Free / SFR'},
+    {icon:'🛡️',name:'Attestation assurance habitation',expiry:'2026-01-01',status:'ok',meta:'Axa / Maif / Groupama'},
+  ],
+  work:[
+    {icon:'📝',name:'Contrat de travail',expiry:null,status:'ok',meta:'CDI / CDD / Intérim'},
+    {icon:'💰',name:'Fiches de paie (×3 derniers mois)',expiry:null,status:'ok',meta:'Bulletins de salaire'},
+    {icon:'📊',name:'Attestation employeur',expiry:'2025-09-01',status:'ok',meta:'Tampon et signature'},
+    {icon:'🏖️',name:'Attestation France Travail (ARE)',expiry:'2025-08-01',status:'ok',meta:'Ex Pôle Emploi'},
+  ],
+  tax:[
+    {icon:'📋',name:"Avis d'imposition 2024",expiry:null,status:'exp',meta:'DGFiP · Jan 2025'},
+    {icon:'📑',name:'Déclaration de revenus',expiry:null,status:'miss',meta:'Impots.gouv.fr'},
+    {icon:'🧾',name:'Attestation fiscale',expiry:null,status:'miss',meta:'Formulaire CERFA'},
+  ],
+  social:[
+    {icon:'👨‍👩‍👧',name:'Attestation CAF',expiry:'2025-12-31',status:'ok',meta:'Caf.fr'},
+    {icon:'🏠',name:'Attestation APL (aide logement)',expiry:'2025-12-31',status:'ok',meta:'CAF · montant mensuel'},
+    {icon:'🌱',name:'Attestation RSA',expiry:'2025-06-30',status:'soon',meta:'CAF · sous conditions'},
+    {icon:'👶',name:'Attestation allocations familiales',expiry:null,status:'miss',meta:'CAF · +2 enfants'},
+    {icon:'💼',name:'Attestation ARE / chômage',expiry:null,status:'miss',meta:'France Travail'},
+  ],
+  immigration:[
+    {icon:'🪪',name:'Titre de séjour (CDS / CdR)',expiry:'2025-12-12',status:'soon',meta:'Préfecture · ANEF'},
+    {icon:'✈️',name:'Visa / VLS-TS',expiry:'2026-01-01',status:'ok',meta:'Consulat français'},
+    {icon:'📋',name:'Attestation OFII',expiry:null,status:'miss',meta:'Contrat d\'intégration'},
+    {icon:'📜',name:'Récépissé de demande ANEF',expiry:'2025-09-01',status:'miss',meta:'Administration numérique'},
+  ],
+  banking:[
+    {icon:'🏦',name:"RIB (Relevé d'Identité Bancaire)",expiry:null,status:'ok',meta:'BNP / LCL / CIC...'},
+    {icon:'📊',name:'Relevés de compte (×3 mois)',expiry:null,status:'ok',meta:'Extraits mensuels'},
+    {icon:'🛡️',name:'Attestation assurance habitation',expiry:'2026-01-01',status:'ok',meta:'Banque assureur'},
+  ],
+  education:[
+    {icon:'🎓',name:'Diplômes et relevés de notes',expiry:null,status:'ok',meta:'Originaux + copies'},
+    {icon:'🪪',name:'Carte étudiante',expiry:'2026-06-30',status:'ok',meta:'Université / Grande École'},
+    {icon:'📝',name:'Certificat de scolarité',expiry:'2026-06-30',status:'miss',meta:'Secrétariat pédagogique'},
+    {icon:'📋',name:'Dossier Parcoursup / Campus France',expiry:null,status:'miss',meta:'Plateforme nationale'},
+  ],
+  disability:[
+    {icon:'♿',name:'Carte Mobilité Inclusion (CMI)',expiry:'2027-01-01',status:'ok',meta:'MDPH · mention stationnement'},
+    {icon:'📋',name:'Attestation RQTH',expiry:'2026-06-01',status:'miss',meta:'MDPH · Reconnaissance Travailleur Handicapé'},
+  ],
+};
+
+/* ═══════════════════════════════════════════
+   I18N
+═══════════════════════════════════════════ */
+const LANG = {
+  fr:{
+    hero_label:'Bonjour',    hero_name:'Alfred GOMES 👋',hero_sub:'Votre coffre-fort administratif sécurisé',
+    hero_tag1:'🇫🇷 Hébergé France',hero_tag2:'🔒 RGPD Conforme',hero_tag3:'☁ AWS EU-West-3',
+    alert_bold:'2 documents expirés',alert_text:'cliquez pour voir',
+    stat1:'Documents stockés',stat2:'Expirés',stat3:'Bientôt',
+    recent_title:'Récents',see_all:'Voir tout',
+    doc1:'Carte Vitale',doc1_meta:'Valable indéfiniment',doc2:'Carte de séjour',doc2_meta:'Préfecture · exp: 12 déc 2025',
+    doc3:'Carte Navigo',doc4:"Avis d'imposition",doc4_meta:'DGFiP · Expiré (+90j)',
+    quick_title:'Actions rapides',qa1:'Scanner',qa1d:'Ajouter via OCR',qa2:'Construire',qa2d:'Créer un dossier',
+    qa3:'IA Admin',qa3d:'Poser une question',qa4:'PDF Fusionné',qa4d:'Exporter <2MB',
+    vault_title:'Coffre-fort',all_cats:'Toutes',add_doc:'Ajouter un document',back:'Retour',
+    upload_title:'Ajouter un document',upload_sub:'Photographiez ou importez — OCR automatique inclus',
+    dz_text:'Prendre une photo ou glisser-déposer',dz_hint:'JPG · PNG · PDF · Max 10MB',
+    dz_btn:'Choisir un fichier',dz_processing:'Analyse OCR en cours...',
+    ocr_detected:'OCR détecté automatiquement',doc_name_label:'Nom du document',cat_label:'Catégorie',
+    cat_identity:'Identité',cat_health:'Santé',cat_transport:'Transport',cat_housing:'Logement',
+    cat_work:'Travail',cat_tax:'Fiscal',cat_social:'Social',cat_immigration:'Immigration',
+    cat_banking:'Banque',cat_education:'Études',cat_disability:'Handicap',cat_family:'Famille',
+    save_doc:'💾 Enregistrer dans le coffre',
+    dossier_title:'Constructeur',choose_goal:'Choisir un objectif',
+    goal1:"Location d'appartement",goal1_prog:'4 / 6 docs',
+    goal2:'Renouvellement titre de séjour',goal2_prog:'3 / 5 docs',
+    goal3:'Allocations CAF / APL',goal3_prog:'2 / 7 docs',
+    goal4:'Permis de conduire / ANTS',goal4_prog:'4 / 4 ✓',
+    goal5:'Renouvellement Carte Vitale',goal5_prog:'1 / 2 docs',
+    goal6:'Inscription scolaire / universitaire',goal6_prog:'2 / 5 docs',
+    goal7:"Demande d'emploi / ARE",goal7_prog:'2 / 4 docs',
+    checklist_title:'Liste de vérification — Location',
+    c1:'Justificatif de domicile',c2:'3 fiches de paie',c3:"Pièce d'identité (CNI/Passeport)",
+    c4:"Avis d'imposition",c5:'Contrat de travail',c6:'Garant / caution solidaire',
+    req:'Obligatoire',opt:'Optionnel',export_pdf:'Exporter PDF fusionné (<2MB)',
+    ai_online:'En ligne',ai_trained:'Formé sur\nprocédures 2026',
+    ai_greeting:"Bonjour ! Je suis ZenBot 🤖 — votre assistant administratif français. Je suis formé sur toutes les procédures 2026 : CAF, CPAM, ANEF, impôts, carte de séjour, Navigo... Posez-moi n'importe quelle question !",
+    ai_q1:"C'est quoi le quotient familial ?",
+    ai_a1:"Le <strong>quotient familial</strong> divise votre revenu imposable par un nombre de « parts » selon la composition de votre foyer. Exemple : couple + 2 enfants = 3 parts → moins d'impôt 📊",
+    qq1:'💬 Comment renouveler mon titre de séjour ?',qq2:"💬 Qu'est-ce que l'APL ?",
+    qq3:'💬 Documents pour la Carte Vitale ?',qq4:'💬 C\'est quoi la CMI (carte handicap) ?',
+    ai_response:"Je recherche dans la base officielle Service-Public.fr et Légifrance... 📚 Votre question a bien été reçue. En production, ZenBot interrogerait l'API PISTE pour vous donner une réponse officielle mise à jour.",
+    profile_title:'Mon profil',plan_premium:'✨ Premium',plan_since:'Depuis jan 2025',
+    storage_title:'Stockage',docs:'docs',storage_ok:'Espace libre',
+    settings_title:'Paramètres',notif_label:'Notifications expiration',notif_sub:'Alerte 30j avant expiration',
+    biometric_label:'Déverrouillage biométrique',biometric_sub:'Face ID / Empreinte',
+    lang_label:'Langue de l\'application',backup_label:'Sauvegarde automatique',backup_sub:'AWS S3 EU-West-3 (Paris)',
+    gdpr_text:'<strong>RGPD conforme.</strong> Vos données sont hébergées en France (AWS EU-West-3, Paris). Aucun partage avec des tiers. Suppression possible à tout moment.',
+    delete_account:'🗑 Supprimer mon compte et mes données',
+    nav_home:'Accueil',nav_vault:'Coffre',nav_dossier:'Dossiers',nav_ai:'IA Admin',nav_profile:'Profil',
+    ai_placeholder:'Posez votre question...',
+    chip_all:'📋 Tous',chip_identity:'🪪 Identité',chip_health:'🏥 Santé',chip_transport:'🚇 Transport',
+    chip_housing:'🏠 Logement',chip_work:'💼 Travail',chip_tax:'💰 Fiscal',chip_social:'👨‍👩‍👧 Social',
+    chip_immigration:'✈️ Immigration',chip_banking:'🏦 Banque',chip_education:'🎓 Études',chip_disability:'♿ Handicap',
+  },
+  ar:{
+    hero_label:'مرحباً',    hero_name:'Alfred GOMES 👋',hero_sub:'خزينتك الإدارية الآمنة',
+    hero_tag1:'🇫🇷 مستضاف بفرنسا',hero_tag2:'🔒 RGPD',hero_tag3:'☁ AWS باريس',
+    alert_bold:'2 مستندات منتهية',alert_text:'اضغط لعرضها',
+    stat1:'المستندات',stat2:'منتهية',stat3:'قريباً',
+    recent_title:'الأخيرة',see_all:'عرض الكل',
+    doc1:'بطاقة فيتال',doc1_meta:'صالحة إلى الأبد',doc2:'بطاقة الإقامة',doc2_meta:'تنتهي: 12 ديسمبر 2025',
+    doc3:'بطاقة نافيغو',doc4:'إشعار الضريبة',doc4_meta:'DGFiP · منتهي (+90 يوم)',
+    quick_title:'إجراءات سريعة',qa1:'مسح ضوئي',qa1d:'إضافة عبر OCR',qa2:'بناء ملف',qa2d:'إنشاء دوسيه',
+    qa3:'مساعد ذكي',qa3d:'اطرح سؤالاً',qa4:'PDF مدمج',qa4d:'تصدير <2MB',
+    vault_title:'الخزينة',all_cats:'كل الفئات',add_doc:'إضافة مستند',back:'رجوع',
+    upload_title:'إضافة مستند',upload_sub:'التقط صورة أو استورد — OCR تلقائي',
+    dz_text:'التقط صورة أو اسحب وأفلت',dz_hint:'JPG · PNG · PDF · حد 10MB',
+    dz_btn:'اختيار ملف',dz_processing:'جارٍ التحليل...',
+    ocr_detected:'تم الكشف تلقائياً',doc_name_label:'اسم المستند',cat_label:'الفئة',
+    cat_identity:'هوية',cat_health:'صحة',cat_transport:'نقل',cat_housing:'سكن',
+    cat_work:'عمل',cat_tax:'ضرائب',cat_social:'اجتماعي',cat_immigration:'إقامة',
+    cat_banking:'بنك',cat_education:'دراسة',cat_disability:'إعاقة',cat_family:'أسرة',
+    save_doc:'💾 حفظ في الخزينة',
+    dossier_title:'منشئ الملفات',choose_goal:'اختر هدفاً',
+    goal1:'استئجار شقة',goal1_prog:'4 / 6 وثائق',
+    goal2:'تجديد تصريح الإقامة',goal2_prog:'3 / 5 وثائق',
+    goal3:'مخصصات CAF / APL',goal3_prog:'2 / 7 وثائق',
+    goal4:'رخصة القيادة / ANTS',goal4_prog:'4 / 4 ✓',
+    goal5:'تجديد بطاقة فيتال',goal5_prog:'1 / 2 وثائق',
+    goal6:'التسجيل المدرسي / الجامعي',goal6_prog:'2 / 5 وثائق',
+    goal7:'طلب عمل / ARE',goal7_prog:'2 / 4 وثائق',
+    checklist_title:'قائمة التحقق — السكن',
+    c1:'إثبات السكن',c2:'3 قسائم راتب',c3:'وثيقة هوية',c4:'إشعار ضريبي',c5:'عقد عمل',c6:'كفيل',
+    req:'إلزامي',opt:'اختياري',export_pdf:'تصدير PDF مدمج (<2MB)',
+    ai_online:'متصل',ai_trained:'مدرب على إجراءات 2026',
+    ai_greeting:'مرحباً! أنا ZenBot 🤖 — مساعدك الإداري الفرنسي. مدرب على جميع الإجراءات 2026: CAF، CPAM، ANEF، الضرائب، تصريح الإقامة، نافيغو... اطرح أي سؤال!',
+    ai_q1:'ما هي الحصة العائلية؟',
+    ai_a1:'<strong>الحصة العائلية</strong> تقسم دخلك الخاضع للضريبة على عدد من الأسهم حسب تكوين أسرتك. مثال: زوجان + طفلان = 3 أسهم → ضريبة أقل 📊',
+    qq1:'💬 كيف أجدد تصريح الإقامة؟',qq2:'💬 ما هو APL؟',qq3:'💬 وثائق بطاقة فيتال؟',qq4:'💬 ما هي CMI (بطاقة الإعاقة)؟',
+    ai_response:'أبحث في قاعدة Service-Public.fr الرسمية... 📚 تم استلام سؤالك. في الإنتاج، سيستعلم ZenBot عن واجهة PISTE لتزويدك بإجابة رسمية محدثة.',
+    profile_title:'ملفي الشخصي',plan_premium:'✨ مميز',plan_since:'منذ يناير 2025',
+    storage_title:'التخزين',docs:'وثائق',storage_ok:'مساحة كافية',
+    settings_title:'الإعدادات',notif_label:'إشعارات الانتهاء',notif_sub:'تنبيه قبل 30 يوم',
+    biometric_label:'فتح بيومتري',biometric_sub:'Face ID / بصمة',
+    lang_label:'لغة التطبيق',backup_label:'النسخ الاحتياطي',backup_sub:'AWS EU-West-3 (باريس)',
+    gdpr_text:'<strong>متوافق مع RGPD.</strong> بياناتك مستضافة في فرنسا. لا مشاركة مع أطراف ثالثة. الحذف ممكن في أي وقت.',
+    delete_account:'🗑 حذف حسابي وبياناتي',
+    nav_home:'الرئيسية',nav_vault:'الخزينة',nav_dossier:'الملفات',nav_ai:'المساعد',nav_profile:'الملف',
+    ai_placeholder:'اطرح سؤالك...',
+    chip_all:'📋 الكل',chip_identity:'🪪 هوية',chip_health:'🏥 صحة',chip_transport:'🚇 نقل',
+    chip_housing:'🏠 سكن',chip_work:'💼 عمل',chip_tax:'💰 ضرائب',chip_social:'👨‍👩‍👧 اجتماعي',
+    chip_immigration:'✈️ إقامة',chip_banking:'🏦 بنك',chip_education:'🎓 دراسة',chip_disability:'♿ إعاقة',
+  },
+  en:{
+    hero_label:'Hello',    hero_name:'Alfred GOMES 👋',
+    hero_tag1:'🇫🇷 Hosted France',hero_tag2:'🔒 GDPR Compliant',hero_tag3:'☁ AWS EU-West-3',
+    alert_bold:'2 expired documents',alert_text:'tap to view',
+    stat1:'Stored documents',stat2:'Expired',stat3:'Expiring soon',
+    recent_title:'Recent',see_all:'See all',
+    doc1:'Vitale Health Card',doc1_meta:'Valid indefinitely',doc2:'Residence Permit',doc2_meta:'Préfecture · exp: 12 Dec 2025',
+    doc3:'Navigo Transport Card',doc4:'Tax Notice',doc4_meta:'DGFiP · Expired (+90d)',
+    quick_title:'Quick actions',qa1:'Scan',qa1d:'Add via OCR',qa2:'Build',qa2d:'Create a dossier',
+    qa3:'AI Admin',qa3d:'Ask a question',qa4:'Merged PDF',qa4d:'Export <2MB',
+    vault_title:'Vault',all_cats:'All categories',add_doc:'Add a document',back:'Back',
+    upload_title:'Add a document',upload_sub:'Photograph or import — automatic OCR included',
+    dz_text:'Take a photo or drag & drop',dz_hint:'JPG · PNG · PDF · Max 10MB',
+    dz_btn:'Choose file',dz_processing:'OCR analysis in progress...',
+    ocr_detected:'Automatically detected',doc_name_label:'Document name',cat_label:'Category',
+    cat_identity:'Identity',cat_health:'Health',cat_transport:'Transport',cat_housing:'Housing',
+    cat_work:'Work',cat_tax:'Tax',cat_social:'Social',cat_immigration:'Immigration',
+    cat_banking:'Banking',cat_education:'Education',cat_disability:'Disability',cat_family:'Family',
+    save_doc:'💾 Save to vault',
+    dossier_title:'Builder',choose_goal:'Choose a goal',
+    goal1:'Apartment rental',goal1_prog:'4 / 6 docs',
+    goal2:'Residence permit renewal',goal2_prog:'3 / 5 docs',
+    goal3:'CAF / APL allowances',goal3_prog:'2 / 7 docs',
+    goal4:'Driving licence / ANTS',goal4_prog:'4 / 4 ✓',
+    goal5:'Vitale card renewal',goal5_prog:'1 / 2 docs',
+    goal6:'School / university enrolment',goal6_prog:'2 / 5 docs',
+    goal7:'Job application / ARE',goal7_prog:'2 / 4 docs',
+    checklist_title:'Checklist — Rental',
+    c1:'Proof of address',c2:'3 payslips',c3:'ID document (ID card/Passport)',
+    c4:'Tax notice',c5:'Employment contract',c6:'Guarantor',
+    req:'Required',opt:'Optional',export_pdf:'Export merged PDF (<2MB)',
+    ai_online:'Online',ai_trained:'Trained on\n2026 procedures',
+    ai_greeting:"Hello! I'm ZenBot 🤖 — your French administrative assistant. Trained on all 2026 procedures: CAF, CPAM, ANEF, taxes, residence permit, Navigo... Ask me anything!",
+    ai_q1:'What is the family quotient?',
+    ai_a1:'The <strong>family quotient</strong> divides your taxable income by a number of "shares" based on your household composition. Example: couple + 2 children = 3 shares → less tax 📊',
+    qq1:'💬 How to renew my residence permit?',qq2:'💬 What is APL housing aid?',qq3:'💬 Documents for the Vitale card?',qq4:'💬 What is the CMI disability card?',
+    ai_response:"Searching the official Service-Public.fr database... 📚 Your question has been received. In production, ZenBot would query the PISTE API to give you an official, up-to-date answer.",
+    profile_title:'My profile',plan_premium:'✨ Premium',plan_since:'Since Jan 2025',
+    storage_title:'Storage',docs:'docs',storage_ok:'Free space',
+    settings_title:'Settings',notif_label:'Expiry notifications',notif_sub:'Alert 30 days before expiry',
+    biometric_label:'Biometric unlock',biometric_sub:'Face ID / Fingerprint',
+    lang_label:'App language',backup_label:'Automatic backup',backup_sub:'AWS S3 EU-West-3 (Paris)',
+    gdpr_text:'<strong>GDPR compliant.</strong> Your data is hosted in France (AWS EU-West-3, Paris). No third-party sharing. Deletion available at any time.',
+    delete_account:'🗑 Delete my account and data',
+    nav_home:'Home',nav_vault:'Vault',nav_dossier:'Dossiers',nav_ai:'AI Admin',nav_profile:'Profile',
+    ai_placeholder:'Ask your question...',
+    chip_all:'📋 All',chip_identity:'🪪 Identity',chip_health:'🏥 Health',chip_transport:'🚇 Transport',
+    chip_housing:'🏠 Housing',chip_work:'💼 Work',chip_tax:'💰 Tax',chip_social:'👨‍👩‍👧 Social',
+    chip_immigration:'✈️ Immigration',chip_banking:'🏦 Banking',chip_education:'🎓 Education',chip_disability:'♿ Disability',
+  },
+};
+// Other languages fall back to French for unlisted keys
+['pt','es','bn','hi','ta','tr','it'].forEach(code=>{LANG[code]={...LANG.fr};});
+LANG.pt={...LANG.fr,hero_label:'Olá',hero_name:'Karim Aziz 👋',hero_sub:'O seu cofre administrativo seguro',ai_placeholder:'A sua pergunta...',nav_home:'Início',nav_vault:'Cofre',nav_dossier:'Dossiês',nav_ai:'IA Admin',nav_profile:'Perfil'};
+LANG.es={...LANG.fr,hero_label:'Hola',hero_name:'Karim Aziz 👋',hero_sub:'Tu caja fuerte administrativa',ai_placeholder:'Tu pregunta...',nav_home:'Inicio',nav_vault:'Caja fuerte',nav_dossier:'Expedientes',nav_ai:'IA Admin',nav_profile:'Perfil'};
+LANG.bn={...LANG.fr,hero_label:'হ্যালো',hero_name:'Karim Aziz 👋',hero_sub:'আপনার নিরাপদ প্রশাসনিক ভল্ট',ai_placeholder:'আপনার প্রশ্ন করুন...',nav_home:'হোম',nav_vault:'ভল্ট',nav_dossier:'ডোসিয়ার',nav_ai:'AI Admin',nav_profile:'প্রোফাইল'};
+LANG.hi={...LANG.fr,hero_label:'नमस्ते',hero_name:'Karim Aziz 👋',hero_sub:'आपकी सुरक्षित प्रशासनिक तिजोरी',ai_placeholder:'अपना प्रश्न पूछें...',nav_home:'होम',nav_vault:'तिजोरी',nav_dossier:'दोसिए',nav_ai:'AI सहायक',nav_profile:'प्रोफ़ाइल'};
+LANG.ta={...LANG.fr,hero_label:'வணக்கம்',hero_name:'Karim Aziz 👋',hero_sub:'உங்கள் நிர்வாக பாதுகாப்பு பெட்டகம்',ai_placeholder:'உங்கள் கேள்வி...',nav_home:'முகப்பு',nav_vault:'பெட்டகம்',nav_dossier:'கோப்புகள்',nav_ai:'AI',nav_profile:'சுயவிவரம்'};
+LANG.tr={...LANG.fr,hero_label:'Merhaba',hero_name:'Karim Aziz 👋',hero_sub:'İdari güvenlik kasanız',ai_placeholder:'Sorunuzu sorun...',nav_home:'Ana Sayfa',nav_vault:'Kasa',nav_dossier:'Dosyalar',nav_ai:'AI Admin',nav_profile:'Profil'};
+LANG.it={...LANG.fr,hero_label:'Ciao',hero_name:'Karim Aziz 👋',hero_sub:'Il tuo archivio amministrativo sicuro',ai_placeholder:'La tua domanda...',nav_home:'Home',nav_vault:'Archivio',nav_dossier:'Fascicoli',nav_ai:'AI Admin',nav_profile:'Profilo'};
+
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+let currentScreen = 'home';
+let screenHistory = [];
+let currentLang = 'fr';
+let selectedCatUpload = null;
+let uploadedDocs = {};  // persists added docs per category
+
+const SCREEN_ORDER = ['home','vault','upload','dossier','ai','profile'];
+
+/* ═══════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════ */
+function navigate(target) {
+  if (target === currentScreen) return;
+  screenHistory.push(currentScreen);
+  const ci = SCREEN_ORDER.indexOf(currentScreen);
+  const ni = SCREEN_ORDER.indexOf(target);
+  const dir = ni >= ci ? 'slide-left' : 'slide-right';
+  const el = document.getElementById('screen-' + currentScreen);
+  el.classList.remove('active');
+  el.classList.add(dir);
+  const newEl = document.getElementById('screen-' + target);
+  newEl.classList.remove('slide-left','slide-right');
+  newEl.classList.add('active');
+  currentScreen = target;
+  updateNav(target);
+  if (target === 'vault') renderCatGrid();
+}
+
+function navigateBack() {
+  if (screenHistory.length > 0) {
+    const prev = screenHistory.pop();
+    const ci = SCREEN_ORDER.indexOf(currentScreen);
+    const pi = SCREEN_ORDER.indexOf(prev);
+    const el = document.getElementById('screen-' + currentScreen);
+    el.classList.remove('active');
+    el.classList.add('slide-right');
+    const prevEl = document.getElementById('screen-' + prev);
+    prevEl.classList.remove('slide-left','slide-right');
+    prevEl.classList.add('active');
+    currentScreen = prev;
+    updateNav(prev);
+  }
+}
+
+function updateNav(screen) {
+  const navMap = {home:'home',vault:'vault',upload:'vault',dossier:'dossier',ai:'ai',profile:'profile'};
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navId = 'nav-' + (navMap[screen] || screen);
+  const navEl = document.getElementById(navId);
+  if (navEl) navEl.classList.add('active');
+}
+
+/* ═══════════════════════════════════════════
+   VAULT
+═══════════════════════════════════════════ */
+let currentVaultCat = 'all';
+
+function renderCatGrid() {
+  showAllCats();
+  const grid = document.getElementById('cat-grid');
+  let html = '';
+  Object.entries(CAT_META).forEach(([key, cat]) => {
+    const count = cat.done + (uploadedDocs[key] ? uploadedDocs[key].length : 0);
+    html += `
+      <div class="cat-ov-card" onclick="showCatDocs('${key}')">
+        <div class="coc-top">
+          <div class="coc-icon-wrap ${cat.color}">${cat.icon}</div>
+          <div class="coc-count-chip">${count}/${cat.total}</div>
+        </div>
+        <div class="coc-name">${cat.name_fr}</div>
+        <div class="coc-hint">${cat.hint_fr}</div>
+        <div class="coc-bar"><div class="coc-bar-fill" style="width:${cat.fill}%;background:${cat.bar}"></div></div>
+      </div>`;
+  });
+  html += `
+    <div class="cat-ov-card coc-add" onclick="navigate('upload')">
+      <div class="coc-add-icon">＋</div>
+      <div class="coc-add-text" data-i18n="add_doc">Ajouter</div>
+      <div class="coc-add-sub">Scanner ou importer</div>
+    </div>`;
+  grid.innerHTML = html;
+}
+
+function selectCat(btn, cat) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  currentVaultCat = cat;
+  if (cat === 'all') { showAllCats(); renderCatGrid(); }
+  else { showCatDocs(cat); }
+}
+
+function showAllCats() {
+  document.getElementById('vault-overview').style.display = '';
+  document.getElementById('vault-cat-detail').style.display = 'none';
+}
+
+function showCatDocs(cat) {
+  currentVaultCat = cat;
+  document.getElementById('vault-overview').style.display = 'none';
+  document.getElementById('vault-cat-detail').style.display = '';
+  const meta = CAT_META[cat];
+  document.getElementById('cat-detail-title').textContent = meta.icon + ' ' + meta.name_fr;
+  document.getElementById('cat-detail-sub').textContent = meta.hint_fr;
+  // also highlight chip
+  document.querySelectorAll('.chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.cat === cat);
+  });
+  renderDocList(cat);
+}
+
+function renderDocList(cat) {
+  const docs = DOC_DATA[cat] || [];
+  const extra = uploadedDocs[cat] || [];
+  const all = [...docs, ...extra];
+  const container = document.getElementById('cat-doc-list');
+  const colorMap = {identity:'di-blue',health:'di-green',transport:'di-orange',housing:'di-purple',work:'di-blue',tax:'di-red',social:'di-green',immigration:'di-blue',banking:'di-gold',education:'di-purple',disability:'di-orange'};
+  container.innerHTML = all.map((d,i) => {
+    const s = d.status;
+    const badgeClass = s==='ok'?'et-ok':s==='exp'?'et-warn':s==='soon'?'et-soon':'et-none';
+    const badgeTxt = s==='ok'?'✓ Valide':s==='exp'?'⚠ Expiré':s==='soon'?'⚡ Bientôt':'○ Manquant';
+    const bg = s==='ok'?'background:rgba(46,204,138,.12);color:#2ecc8a':s==='exp'?'background:rgba(224,82,82,.12);color:#e05252':s==='soon'?'background:rgba(240,120,64,.12);color:#f07840':'background:rgba(74,82,120,.1);color:#4a5278';
+    const col = colorMap[cat]||'di-blue';
+    const expLine = d.expiry ? `Exp: ${d.expiry}` : (d.meta||'');
+    return `
+      <div class="doc-full-item">
+        <div class="dfi-main">
+          <div class="dfi-icon ${col}">${d.icon}</div>
+          <div class="dfi-info">
+            <div class="dfi-name">${d.name}</div>
+            <div class="dfi-sub">${expLine}</div>
+            <span class="dfi-expiry" style="${bg}">${badgeTxt}</span>
+          </div>
+          <div class="dfi-actions">
+            ${s==='miss'?`<button class="dfi-btn primary" onclick="navigate('upload')">＋ Ajouter</button>`:`<button class="dfi-btn" onclick="showToast('👁 Aperçu du document')">👁</button><button class="dfi-btn" onclick="showToast('↑ Téléchargé')">↑</button>`}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleVaultSearch() {
+  const bar = document.getElementById('vault-search-bar');
+  bar.style.display = bar.style.display === 'none' ? 'flex' : 'none';
+  if (bar.style.display !== 'none') document.getElementById('vault-search-input').focus();
+}
+
+function filterVaultSearch(val) {
+  if (!val) { renderCatGrid(); return; }
+  showAllCats();
+  const grid = document.getElementById('cat-grid');
+  let html = '';
+  Object.entries(CAT_META).forEach(([key, cat]) => {
+    const docs = DOC_DATA[key] || [];
+    const match = docs.filter(d => d.name.toLowerCase().includes(val.toLowerCase()));
+    if (match.length > 0) {
+      html += `<div class="cat-ov-card" onclick="showCatDocs('${key}')">
+        <div class="coc-top"><div class="coc-icon-wrap ${cat.color}">${cat.icon}</div><div class="coc-count-chip">${match.length}</div></div>
+        <div class="coc-name">${cat.name_fr}</div>
+        <div class="coc-hint">${match.map(d=>d.name).join(', ')}</div></div>`;
+    }
+  });
+  grid.innerHTML = html || '<div style="padding:20px;color:var(--text2);text-align:center">Aucun résultat</div>';
+}
+
+/* ═══════════════════════════════════════════
+   UPLOAD
+═══════════════════════════════════════════ */
+function triggerFileInput() {
+  document.getElementById('file-input').click();
+}
+
+function handleFileSelect(input) {
+  if (input.files && input.files[0]) startOCR(input.files[0].name);
+}
+
+function handleFileDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) startOCR(file.name);
+}
+
+function startOCR(filename) {
+  document.getElementById('dz-idle').style.display = 'none';
+  document.getElementById('dz-processing').style.display = 'flex';
+  setTimeout(() => {
+    document.getElementById('dz-processing').style.display = 'none';
+    document.getElementById('dz-idle').style.display = '';
+    document.getElementById('drop-zone').innerHTML = `<span style="font-size:28px">✅</span><div style="font-size:13px;color:var(--green);margin-top:8px;font-weight:500">Fichier analysé : ${filename}</div>`;
+    showOCRResult();
+  }, 2000);
+}
+
+function showOCRResult() {
+  const r = document.getElementById('ocr-result');
+  r.style.display = 'block';
+  document.getElementById('ocr-fields').innerHTML = `
+    <div class="ocr-field"><div class="ocr-field-lbl">Type détecté</div><div class="ocr-field-val">Justif. domicile</div></div>
+    <div class="ocr-field"><div class="ocr-field-lbl">Date</div><div class="ocr-field-val">15 avr 2025</div></div>
+    <div class="ocr-field"><div class="ocr-field-lbl">Émetteur</div><div class="ocr-field-val">EDF</div></div>
+    <div class="ocr-field"><div class="ocr-field-lbl">Adresse</div><div class="ocr-field-val">75013 Paris</div></div>`;
+  document.getElementById('doc-name-input').value = 'Facture EDF — 15 avr 2025';
+  // auto-select housing
+  document.querySelectorAll('.cp-item').forEach(i => i.classList.remove('selected'));
+  const h = document.querySelector('.cp-item[data-cat="housing"]');
+  if (h) { h.classList.add('selected'); selectedCatUpload = 'housing'; }
+}
+
+function pickCat(el) {
+  document.querySelectorAll('.cp-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedCatUpload = el.dataset.cat;
+}
+
+function saveDocument() {
+  const name = document.getElementById('doc-name-input').value.trim();
+  const cat = selectedCatUpload;
+  if (!name) { showToast('⚠️ Veuillez nommer le document'); return; }
+  if (!cat) { showToast('⚠️ Veuillez choisir une catégorie'); return; }
+  if (!uploadedDocs[cat]) uploadedDocs[cat] = [];
+  uploadedDocs[cat].push({icon:'📄',name,expiry:null,status:'ok',meta:'Ajouté par vous'});
+  showToast('✅ Document enregistré dans le coffre !');
+  // reset form
+  setTimeout(() => {
+    document.getElementById('doc-name-input').value = '';
+    document.getElementById('ocr-result').style.display = 'none';
+    document.querySelectorAll('.cp-item').forEach(i => i.classList.remove('selected'));
+    selectedCatUpload = null;
+    document.getElementById('drop-zone').innerHTML = `
+      <div id="dz-idle">
+        <span class="dz-icon">📷</span>
+        <div class="dz-text" data-i18n="dz_text">Prendre une photo ou glisser-déposer</div>
+        <div class="dz-hint" data-i18n="dz_hint">JPG · PNG · PDF · Max 10MB</div>
+        <button class="dz-btn" onclick="triggerFileInput()" data-i18n="dz_btn">Choisir un fichier</button>
+        <input type="file" id="file-input" accept="image/*,application/pdf" style="display:none" onchange="handleFileSelect(this)"/>
+      </div>
+      <div class="dz-processing" id="dz-processing">
+        <div class="dz-spinner"></div>
+        <span>Analyse OCR en cours...</span>
+      </div>`;
+    navigate('vault');
+  }, 800);
+}
+
+/* ═══════════════════════════════════════════
+   DOSSIER
+═══════════════════════════════════════════ */
+function selectGoal(card, type) {
+  document.querySelectorAll('.goal-card').forEach(g => g.classList.remove('active'));
+  card.classList.add('active');
+  showToast(`📁 Objectif sélectionné !`);
+}
+
+function toggleCheck(el) {
+  const label = el.nextElementSibling;
+  el.classList.toggle('done');
+  label.classList.toggle('done');
+  el.textContent = el.classList.contains('done') ? '✓' : '';
+}
+
+function exportPDF() {
+  showToast('📤 Export PDF en cours... (fonctionnalité disponible en production)');
+}
+
+/* ═══════════════════════════════════════════
+   AI ASSISTANT
+═══════════════════════════════════════════ */
+function sendQuickQ(el) {
+  const text = el.textContent.replace('💬 ', '');
+  addBubble(text, 'usr');
+  el.remove();
+  setTimeout(() => {
+    addBubble(LANG[currentLang].ai_response || LANG.fr.ai_response, 'bot');
+  }, 900);
+}
+
+function sendAiMsg() {
+  const inp = document.getElementById('ai-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  addBubble(text, 'usr');
+  inp.value = '';
+  inp.style.height = '';
+  setTimeout(() => {
+    addBubble(LANG[currentLang].ai_response || LANG.fr.ai_response, 'bot');
+  }, 900);
+}
+
+function handleAiKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAiMsg(); }
+}
+
+function autoResize(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight, 90) + 'px';
+}
+
+function addBubble(text, role) {
+  const msgs = document.getElementById('ai-messages');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-wrap-' + role;
+  const now = new Date();
+  const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  wrap.innerHTML = `<div class="bubble bubble-${role}">${text}</div><div class="msg-time" style="${role==='usr'?'text-align:right':''}">${time}</div>`;
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+/* ═══════════════════════════════════════════
+   I18N ENGINE
+═══════════════════════════════════════════ */
+const langNames = {fr:'Français',ar:'العربية',en:'English',pt:'Português',es:'Español',bn:'বাংলা',hi:'हिन्दी',ta:'தமிழ்',tr:'Türkçe',it:'Italiano'};
+const rtlLangs = ['ar'];
+
+function setLang(code) {
+  currentLang = code;
+  const L = LANG[code] || LANG.fr;
+  document.documentElement.lang = code;
+  document.documentElement.dir = rtlLangs.includes(code) ? 'rtl' : 'ltr';
+
+  // highlight button
+  document.querySelectorAll('.lang-pill').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('onclick').includes("'"+code+"'"));
+  });
+
+  // apply text nodes
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (L[key] !== undefined) el.innerHTML = L[key];
+  });
+
+  // chips
+  document.querySelectorAll('.chip[data-i18n-chip]').forEach(chip => {
+    const key = 'chip_' + chip.dataset.cat;
+    if (L[key]) chip.innerHTML = L[key];
+  });
+
+  // placeholders
+  const aiInp = document.getElementById('ai-input');
+  if (aiInp) aiInp.placeholder = L.ai_placeholder || 'Posez votre question...';
+  const vsearch = document.getElementById('vault-search-input');
+  if (vsearch) vsearch.placeholder = L.vault_search || 'Rechercher...';
+
+  // profile lang display
+  const ld = document.getElementById('current-lang-display');
+  if (ld) ld.textContent = langNames[code] || code;
+
+  // re-render vault if visible
+  if (currentScreen === 'vault') renderCatGrid();
+}
+
+/* ═══════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════ */
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ═══════════════════════════════════════════
+   LIVE CLOCK
+═══════════════════════════════════════════ */
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+/* ═══════════════════════════════════════════
+   SCROLL TOPBAR SHADOW
+═══════════════════════════════════════════ */
+document.querySelectorAll('.screen').forEach(s => {
+  s.addEventListener('scroll', () => {
+    const tb = s.querySelector('.topbar');
+    if (tb) tb.classList.toggle('bordered', s.scrollTop > 10);
+  });
+});
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+renderCatGrid();
+</script>
+</body>
+</html>
