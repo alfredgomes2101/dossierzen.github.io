@@ -1,4 +1,4 @@
-[index.html.txt](https://github.com/user-attachments/files/26928777/index.html.txt)
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
